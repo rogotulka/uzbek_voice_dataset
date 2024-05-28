@@ -1,0 +1,83 @@
+### Scroll code
+
+import time
+from selenium import webdriver
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+
+URL_ROOT = "https://sharh.commeta.uz/"
+sub_dirs = ['click']
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--enable-logging')
+chrome_options.add_argument('--log-level=0')
+chrome_options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+driver = webdriver.Chrome(options=chrome_options)
+
+from selenium.webdriver.chrome.options import Options
+
+driver.get(URL_ROOT + sub_dirs[0])
+
+while True:
+    time.sleep(5)
+
+    driver.execute_script("window.scrollTo(0, 5000)")
+
+    time.sleep(5)
+
+    elements = driver.find_elements(By.XPATH, "//span[contains(text(), 'Yana yuklash')]")
+    if not elements:
+        break
+
+    for element in elements:
+        ActionChains(driver).click(element).perform()
+
+    time.sleep(10)
+
+'''
+###Print Comments & Reviewers' names
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+import csv
+
+# Настройка Chrome Driver
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Для запуска в фоновом режиме, без GUI
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+# Инициализация WebDriver
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
+try:
+    # Переход на указанный сайт
+    driver.get("https://sharh.commeta.uz/ru/click")
+
+    # Небольшая пауза для загрузки страницы (может потребоваться больше времени в зависимости от скорости интернета и сервера)
+    time.sleep(5)
+
+    # Получение отзывов и никнеймов
+    reviews = driver.find_elements(By.XPATH, "//div[@data-v-792071f1]/span[@data-v-792071f1]")
+    nicknames = driver.find_elements(By.XPATH, "//h3[@class='text-base font-semibold leading-130 text-blue-800 duration-300 line-clamp-1 hover:text-blue']")
+
+    # Сохранение данных в списки
+    review_texts = [review.text for review in reviews]
+    review_authors = [author.text for author in nicknames]
+
+    # Запись данных в CSV файл
+    with open('reviews.csv', mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Nickname', 'Review'])  # Запись заголовков столбцов
+        for author, text in zip(review_authors, review_texts):
+            writer.writerow([author, text])
+
+
+finally:
+    # Закрытие браузера
+    driver.quit()
+
+'''
