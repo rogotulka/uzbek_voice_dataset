@@ -54,7 +54,7 @@ try:
                 writer.writerow([nickname_text, review_text])
 
         # Проверка наличия кнопки "Yana yuklash" для загрузки дополнительных данных
-        elements = driver.find_elements(By.XPATH, "//span[contains(text(), 'Yana yuklash') or contains(text(), 'Загрузить еще') or contains(text(), 'Load more')]")
+        elements = driver.find_elements(By.XPATH, "//span[contains(text(), 'Yana yuklash') or contains(text(), 'Загрузить еще') or contains(text(), 'Load more') or contains(text(), 'Яна юклаш')]")
         if not elements:
             break
 
