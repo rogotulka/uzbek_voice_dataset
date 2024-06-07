@@ -136,3 +136,71 @@ for c_name in categories:
 # finally:
 #     # Закрытие браузера
 #     driver.quit()
+
+
+
+
+
+''' LAST UPDATE
+
+
+import csv
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.keys import Keys 
+
+# Chrome options configuration
+chrome_options = Options()
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+# Initialize WebDriver
+driver = webdriver.Chrome(options=chrome_options)
+
+try:
+    # Navigate to the URL
+    driver.get("https://sharh.commeta.uz/ru/category/finance")
+    time.sleep(7)
+
+    # Load additional content until no more elements found
+    while True:
+        elements = driver.find_elements(By.XPATH,
+                                        "//span[contains(text(), 'Yana yuklash') or contains(text(), 'Загрузить еще') or contains(text(), 'Load more') or contains(text(), 'Яна юклаш')]")
+        if not elements:
+            break
+        for element in elements:
+            ActionChains(driver).click(element).perform()
+            time.sleep(3)
+
+
+    # Extract categories
+    categories = driver.find_elements(By.CSS_SELECTOR,
+                                      'div.bg-white.company-card.rounded-xl.transition-300.border-b.border-divide\\/40')
+    print(categories)
+
+    # Wait for 5 minutes
+    time.sleep(6)
+
+    # Collect category URLs
+    categories_list = []
+    for category in categories:
+        print(category)
+        # ActionChains(driver).click(category).perform()
+        category.send_keys(Keys.CONTROL + 't')
+        time.sleep(1)
+
+        print(driver.current_url)
+        categories_list.append(driver.current_url.split('/')[-1])
+        driver.back()
+        driver.execute_script("window.scrollTo(0,5000);")
+        time.sleep(3)  # Adjust the sleep time as needed to wait for the scroll
+
+finally:
+    # Close the browser
+    driver.quit()
+
+
+'''
