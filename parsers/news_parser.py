@@ -58,7 +58,7 @@ try:
 
         while True:
             time.sleep(5)
-            driver.execute_script("window.scrollTo(0, 5000)")
+            driver.execute_script("window.scrollTo(0, 4500)")
 
             time.sleep(5)
 
@@ -79,6 +79,11 @@ try:
             for element in elements:
                 ActionChains(driver).click(element).perform()
 
+            unfold_comms = driver.find_elements(By.CSS_SELECTOR, "button[class='text-blue cursor-pointer ml-0.5']")
+            if unfold_comms:
+                for element in unfold_comms:
+                    ActionChains(driver).click(element).perform()
+                    
             time.sleep(2)
 
         # Сохранение данных в файле CSV
