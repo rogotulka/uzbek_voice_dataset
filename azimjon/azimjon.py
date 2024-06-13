@@ -17,9 +17,7 @@ if response.status_code == 200:
     blog_urls = list(set(['https://azimjon.com' + url for url in blog_urls]))
 
     # Step 4: Scrape each individual blog post
-    blog_posts = []
-
-    for blog_url in blog_urls:
+    for index, blog_url in enumerate(blog_urls, start=1):
         blog_response = requests.get(blog_url)
         if blog_response.status_code == 200:
             blog_soup = BeautifulSoup(blog_response.content, 'html.parser')
@@ -30,20 +28,19 @@ if response.status_code == 200:
             # Extract content
             content = ''
             for paragraph in blog_soup.find_all('p'):
-                content += paragraph.text + '\n'
+                paragraph_text = paragraph.text.strip()
+                # Skip paragraphs that match the unwanted footer text
+                if paragraph_text.startswith('© 2024 azimjon.com'):
+                    continue
+                content += paragraph_text + '\n'
 
-            # Save the blog post data
-            blog_posts.append({
-                'url': blog_url,
-                'title': title,
-                'content': content.strip()
-            })
+            # Write to a file
+            file_name = f'azimjon-blog-{index}.txt'
+            with open(file_name, 'w', encoding='utf-8') as file:
+                file.write(f"{title}")
+                file.write(f"{content.strip()}\n")
 
-    # Step 5: Display or process the blog posts
-    for post in blog_posts:
-        print(f"Title: {post['title']}")
-        print(f"URL: {post['url']}")
-        print(f"Content: {post['content']}...")  # Display content
-        print('-' * 80)
+            print(f"Saved {file_name}")
+
 else:
     print(f"Failed to fetch the blog listing page: {response.status_code}")
