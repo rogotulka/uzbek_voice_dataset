@@ -104,29 +104,26 @@ finally:
 
 ''' LAST UPDATE
 
-
-import csv
 import time
+import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver import ActionChains
-from selenium.webdriver.common.keys import Keys 
-
-# Chrome options configuration
-chrome_options = Options()
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-
-# Initialize WebDriver
-driver = webdriver.Chrome(options=chrome_options)
 
 try:
-    # Navigate to the URL
-    driver.get("https://sharh.commeta.uz/ru/category/finance")
-    time.sleep(7)
+    chrome_options = Options()
+    #chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument('--enable-logging')
+    chrome_options.add_argument('--log-level=0')
 
-    # Load additional content until no more elements found
+    driver = webdriver.Chrome(options=chrome_options)
+
+    driver.get("https://sharh.commeta.uz/ru/category/finance")
+    time.sleep(5)
+
     while True:
         elements = driver.find_elements(By.XPATH,
                                         "//span[contains(text(), 'Yana yuklash') or contains(text(), 'Загрузить еще') or contains(text(), 'Load more') or contains(text(), 'Яна юклаш')]")
@@ -136,31 +133,65 @@ try:
             ActionChains(driver).click(element).perform()
             time.sleep(3)
 
-
-    # Extract categories
     categories = driver.find_elements(By.CSS_SELECTOR,
-                                      'div.bg-white.company-card.rounded-xl.transition-300.border-b.border-divide\\/40')
-    print(categories)
+                                      'span.font-semibold.leading-130.text-dark.break-all.line-clamp-1')
 
-    # Wait for 5 minutes
-    time.sleep(6)
+    for c in categories:
+        c_name = c.text.lower()
+        if c_name == 'universal bank':
+            c_name = 'h4ei'
+        elif c_name == 'kapitalbank':
+            c_name = 'kapital'
+        elif c_name == 'nbu':
+            c_name = 'a4pw'
+        elif c_name == 'zte corporation':
+            c_name = 'zte_corporation'
 
-    # Collect category URLs
-    categories_list = []
-    for category in categories:
-        print(category)
-        # ActionChains(driver).click(category).perform()
-        category.send_keys(Keys.CONTROL + 't')
-        time.sleep(1)
+        c_name = c_name.replace(' ', '-')
+        c_name = c_name.replace('‘', '')
+        c_name = c_name.replace('.', '')
+        c_name = c_name.replace('(', '')
+        c_name = c_name.replace(')', '')
 
-        print(driver.current_url)
-        categories_list.append(driver.current_url.split('/')[-1])
-        driver.back()
-        driver.execute_script("window.scrollTo(0,5000);")
-        time.sleep(3)  # Adjust the sleep time as needed to wait for the scroll
+        driver.execute_script("window.open('');")
+        driver.switch_to.window(driver.window_handles[1])
+        driver.get(f"https://sharh.commeta.uz/ru/{c_name}")
+        time.sleep(3)
+
+        while True:
+
+            driver.execute_script("window.scrollTo(0, 4500)")
+            time.sleep(3)
+
+            elements = driver.find_elements(By.XPATH,
+                                            "//span[contains(text(), 'Yana yuklash') or contains(text(), 'Загрузить еще') or contains(text(), 'Load more') or contains(text(), 'Яна юклаш')]")
+            if not elements:
+                break
+
+            for element in elements:
+                ActionChains(driver).click(element).perform()
+
+            unfold_comms = driver.find_elements(By.CSS_SELECTOR, "button[class='text-blue cursor-pointer ml-0.5']")
+            if unfold_comms:
+                for element in unfold_comms:
+                    ActionChains(driver).click(element).perform()
+
+        time.sleep(5)
+
+        reviews = driver.find_elements(By.XPATH,
+                                       "//div[@class='text-sm leading-130 text-dark word-break-break-word whitespace-pre-line']/span")
+        nicknames = driver.find_elements(By.XPATH,
+                                         "//h3[@class='text-base font-semibold leading-130 text-blue-800 duration-300 whitespace-nowrap overflow-hidden max-sm:max-w-[200px] text-ellipsis line hover:text-blue']/a")
+
+        with open(f'{c_name}_reviews.csv', mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file, delimiter=',')
+            for review, nickname in zip(reviews, nicknames):
+                writer.writerow([nickname.text, review.text])
+
+        driver.close()
+        driver.switch_to.window(driver.window_handles[0])
 
 finally:
-    # Close the browser
     driver.quit()
 
 
