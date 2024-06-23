@@ -3,17 +3,21 @@ from bs4 import BeautifulSoup
 import os
 from langdetect import detect, DetectorFactory
 from requests.exceptions import RequestException
+import csv
 
 # Ensure consistent language detection results
 DetectorFactory.seed = 0
 
 # Define the starting and ending post IDs
-start_id = 725
-end_id = 74300
+start_id = 1
+end_id = 50
 
 # Directory to save the text files
 output_dir = 'all'
 os.makedirs(output_dir, exist_ok=True)
+
+# List to store titles
+titles = []
 
 post_id = start_id
 while post_id <= end_id:
@@ -54,11 +58,11 @@ while post_id <= end_id:
             if detected_language != 'ru':
                 file_name = os.path.join(output_dir, f'uznews-{post_id}.txt')
                 with open(file_name, 'w', encoding='utf-8') as file:
-                    file.write(f"Language: {detected_language}\n")
-                    file.write(f"Title: {title_text}\n")
-                    file.write(f"Subtitle: {subtitle_text}\n")
-                    file.write(f"Content:\n{main_text.strip()}\n")
+                    file.write(f"{subtitle_text}\n")
+                    file.write(f"{main_text.strip()}\n")
 
+                # Add title to the list of titles
+                titles.append(title_text)
                 print(f"Saved {file_name}")
             else:
                 print(f"Skipped post {post_id} (detected language: {detected_language})")
@@ -78,4 +82,13 @@ while post_id <= end_id:
 
     post_id += 1
 
+# Write titles to a CSV file
+csv_file_path = os.path.join(output_dir, 'titles.csv')
+with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerow(['Title'])
+    for title in titles:
+        csv_writer.writerow([title])
+
 print("Scraping completed.")
+print(f"Titles saved to {csv_file_path}.")
