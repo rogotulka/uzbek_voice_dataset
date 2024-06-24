@@ -1,2 +1,6 @@
-requests=2.32.2
-selenium=4.21.0
+requests==2.32.2
+selenium==4.21.0
+beautifulsoup4==4.9.3
+langdetect==1.0.9
+pytube==11.0.0
+fitrat==0.0.9
