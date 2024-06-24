@@ -93,5 +93,3 @@ with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
 
 print("Scraping completed.")
 print(f"Titles saved to {csv_file_path}.")
-
-
