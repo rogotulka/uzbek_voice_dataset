@@ -15,7 +15,7 @@ try:
 
     driver = webdriver.Chrome(options=chrome_options)
 
-    driver.get("https://sharh.commeta.uz/ru/category/finance")
+    driver.get("https://sharh.commeta.uz/ru/category/construction")
     time.sleep(5)
 
     while True:
@@ -76,11 +76,11 @@ try:
                                        "//div[@class='text-sm leading-130 text-dark word-break-break-word whitespace-pre-line']/span")
         nicknames = driver.find_elements(By.XPATH,
                                          "//h3[@class='text-base font-semibold leading-130 text-blue-800 duration-300 whitespace-nowrap overflow-hidden max-sm:max-w-[200px] text-ellipsis line hover:text-blue']/a")
-
-        with open(f'{c_name}_reviews.csv', mode='w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file, delimiter=',')
-            for review, nickname in zip(reviews, nicknames):
-                writer.writerow([nickname.text, review.text])
+        if len(reviews) != 0:
+            with open(f'{c_name}_reviews.csv', mode='w', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file, delimiter=',')
+                for review, nickname in zip(reviews, nicknames):
+                    writer.writerow([nickname.text, review.text])
 
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
