@@ -1,87 +1,68 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
+import os
 
-# Base URL of the website
-base_url = "https://kun.uz"
+BASE_URL = 'https://kun.uz'
 
+def get_category_urls():
+    response = requests.get(BASE_URL)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    categories = soup.select('ul.page-header__menu.reset-list a')
+    category_urls = {category.text.strip(): BASE_URL + category['href'] for category in categories if 'href' in category.attrs}
+    return category_urls
 
-# Function to get all category links from the homepage
-def get_category_links():
-    response = requests.get(base_url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+def get_post_urls(category_url):
+    post_urls = []
+    response = requests.get(category_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    posts = soup.select('a.news__title')
+    post_urls.extend([BASE_URL + post['href'] for post in posts if 'href' in post.attrs])
+    next_page = soup.select_one('a.next_page')
+    while next_page:
+        response = requests.get(BASE_URL + next_page['href'])
+        soup = BeautifulSoup(response.text, 'html.parser')
+        posts = soup.select('a.news__title')
+        post_urls.extend([BASE_URL + post['href'] for post in posts if 'href' in post.attrs])
+        next_page = soup.select_one('a.next_page')
+    return post_urls
 
-    # Find all category links (update the class name based on actual HTML)
-    categories = soup.find_all('a', class_='category-link')
-    category_links = [base_url + category['href'] for category in categories]
+def scrape_post(post_url):
+    response = requests.get(post_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    title_element = soup.find('h1', class_='single-header__title')
+    date_element = soup.find('div', class_='single-header__date')
+    content_element = soup.find('div', class_='single-content')
 
-    return category_links
-
-
-# Function to get all article links from a category page, including pagination
-def get_all_article_links(category_url):
-    article_links = []
-    page_number = 1
-
-    while True:
-        paginated_url = f"{category_url}/page/{page_number}"
-        response = requests.get(paginated_url)
-
-        # If the page doesn't exist, break the loop
-        if response.status_code != 200:
-            break
-
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        # Find all article links on the category page (update the class name based on actual HTML)
-        articles = soup.find_all('a', class_='news-link')
-
-        # If no articles are found, break the loop
-        if not articles:
-            break
-
-        article_links.extend([base_url + article['href'] for article in articles])
-        page_number += 1
-
-    return article_links
-
-
-# Function to scrape details of an individual article
-def scrape_article(article_url):
-    article_response = requests.get(article_url)
-    article_soup = BeautifulSoup(article_response.content, 'html.parser')
-
-    title = article_soup.find('h1', class_='title').get_text(strip=True)
-    date = article_soup.find('time', class_='publish-date').get_text(strip=True)
-    content = article_soup.find('div', class_='content').get_text(strip=True)
+    title = title_element.text.strip() if title_element else 'No Title'
+    date = date_element.text.strip() if date_element else 'No Date'
+    content = content_element.text.strip() if content_element else 'No Content'
 
     return {
         'title': title,
         'date': date,
-        'content': content,
-        'url': article_url
+        'content': content
     }
 
+def save_post_to_file(post_details, directory):
+    filename = f"{post_details['title']}.txt"
+    valid_filename = ''.join(char for char in filename if char.isalnum() or char in (' ', '.', '_')).rstrip()
+    filepath = os.path.join(directory, valid_filename)
+    with open(filepath, 'w', encoding='utf-8') as file:
+        file.write(f"Title: {post_details['title']}\n")
+        file.write(f"Date: {post_details['date']}\n")
+        file.write(f"Content:\n{post_details['content']}\n")
 
-# Main function to orchestrate the scraping process
-def main():
-    category_links = get_category_links()
-    all_article_links = []
+save_directory = 'scraped_posts'
+os.makedirs(save_directory, exist_ok=True)
 
-    for category_link in category_links:
-        all_article_links.extend(get_all_article_links(category_link))
+category_urls = get_category_urls()
+all_posts = []
 
-    articles_data = []
+for category, url in category_urls.items():
+    post_urls = get_post_urls(url)
+    for post_url in post_urls:
+        post_details = scrape_post(post_url)
+        save_post_to_file(post_details, save_directory)
+        all_posts.append(post_details)
 
-    for article_link in all_article_links:
-        articles_data.append(scrape_article(article_link))
-
-    # Save the scraped data to a CSV file
-    df = pd.DataFrame(articles_data)
-    df.to_csv('kun_uz_articles.csv', index=False)
-    print("Data saved to kun_uz_articles.csv")
-
-
-# Execute the main function
-if __name__ == "__main__":
-    main()
+print(f"Scraped and saved {len(all_posts)} posts.")
